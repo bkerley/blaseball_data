@@ -10,14 +10,19 @@ with
                         day, season,
                         round(home_odds * 100, 0) as home_odds,
                         round(away_odds * 100, 0) as away_odds,
+                        round(
+                                (case when home_odds > away_odds
+                                        then home_odds else away_odds end) * 100, 0) as max_odds,
                         home_score, away_score,
-                        contrary
+                        contrary,
+                        (case when contrary then 1 else 0 end) as contrary_num
                 from finished_games
         )
 select
-        day,
+        max_odds,
         count(day) as total_games,
-        count(case when contrary is true then 1 else 0 end) as contrary_games
+        sum(contrary_num) as contrary_games,
+                round(100.0 * sum(contrary_num) / count(day), 0) as contrary_pct
         from rounded_games
-        group by day
-        order by day asc
+        group by max_odds
+        order by max_odds asc
